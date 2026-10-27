@@ -1,0 +1,88 @@
+# API REST. Es stateless (no guarda nada en el contenedor), así que todas las
+# réplicas son intercambiables y se puede escalar con:
+#   kubectl scale deployment backend --replicas=4 -n smartcampus
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: smartcampus
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: smartcampus-backend:1.0
+          # La imagen se construye en local y no está en ningún registro: si
+          # Kubernetes intentara descargarla, fallaría con ErrImagePull.
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            # Configuración no sensible desde el ConfigMap
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcampus-config
+                  key: APP_ENV
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcampus-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcampus-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcampus-config
+                  key: DB_NAME
+            # Credenciales desde el Secret
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: smartcampus-db-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcampus-db-secret
+                  key: DB_PASSWORD
+          # El Service solo envía tráfico a los Pods "Ready": /health falla si
+          # no hay conexión con la base de datos.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          # Si el proceso se cuelga, Kubernetes reinicia el contenedor.
+          # /health/live no depende de la base de datos, para no reiniciar el
+          # backend cuando el problema está en PostgreSQL.
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

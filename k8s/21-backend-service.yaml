@@ -1,0 +1,15 @@
+# Punto de acceso estable al backend dentro del clúster. Reparte las
+# peticiones entre todos los Pods con la etiqueta app=backend que estén Ready.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: smartcampus
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

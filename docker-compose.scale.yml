@@ -1,0 +1,9 @@
+# Opcional: permite escalar el backend con Docker Compose.
+# Varias réplicas no pueden publicar el mismo puerto del host (8000), así que
+# este fichero quita esa publicación. El frontend sigue llegando al backend por
+# la red interna, y el DNS de Docker devuelve la IP de todas las réplicas.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --scale backend=3
+services:
+  backend:
+    ports: !reset []

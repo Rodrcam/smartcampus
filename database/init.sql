@@ -1,0 +1,48 @@
+-- Esquema y datos de ejemplo de SmartCampus.
+--
+-- La imagen oficial de PostgreSQL ejecuta este fichero automáticamente, pero
+-- SOLO la primera vez, cuando el directorio de datos está vacío. Si se cambia
+-- después, hay que borrar el volumen para que se vuelva a ejecutar.
+
+-- Necesaria para la restricción que impide reservas solapadas.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+CREATE TABLE aulas (
+    id            SERIAL       PRIMARY KEY,
+    nombre        VARCHAR(100) NOT NULL,
+    edificio      VARCHAR(100) NOT NULL,
+    capacidad     INTEGER      NOT NULL CHECK (capacidad > 0),
+    equipamiento  TEXT[]       NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE reservas (
+    id           SERIAL       PRIMARY KEY,
+    aula_id      INTEGER      NOT NULL REFERENCES aulas (id) ON DELETE CASCADE,
+    usuario      VARCHAR(100) NOT NULL,
+    fecha        DATE         NOT NULL,
+    hora_inicio  TIME         NOT NULL,
+    hora_fin     TIME         NOT NULL,
+    CONSTRAINT reservas_horas_validas CHECK (hora_fin > hora_inicio),
+    -- Dos reservas de la misma aula no pueden solaparse. Lo comprueba la base
+    -- de datos, así que funciona aunque lleguen a la vez a réplicas distintas
+    -- del backend.
+    CONSTRAINT reservas_sin_solape EXCLUDE USING gist (
+        aula_id WITH =,
+        tsrange(fecha + hora_inicio, fecha + hora_fin) WITH &&
+    )
+);
+
+INSERT INTO aulas (nombre, edificio, capacidad, equipamiento) VALUES
+    ('Laboratorio de Robótica', 'Edificio A',       30,  ARRAY['ordenadores', 'robots', 'impresora 3D']),
+    ('Aula Magna',              'Edificio Central', 250, ARRAY['proyector', 'sistema de sonido', 'micrófonos']),
+    ('Laboratorio de Redes',    'Edificio B',       24,  ARRAY['ordenadores', 'switches', 'routers']),
+    ('Seminario 1.4',           'Edificio A',       16,  ARRAY['pizarra digital', 'videoconferencia']),
+    ('Aula 2.07',               'Edificio C',       60,  ARRAY['proyector', 'pizarra']);
+
+INSERT INTO reservas (aula_id, usuario, fecha, hora_inicio, hora_fin) VALUES
+    (1, 'ana.garcia',          '2026-11-03', '09:00', '11:00'),
+    (1, 'luis.martin',         '2026-11-03', '11:30', '13:30'),
+    (2, 'decanato',            '2026-11-05', '10:00', '14:00'),
+    (3, 'maria.lopez',         '2026-11-04', '16:00', '18:00'),
+    (4, 'grupo.investigacion', '2026-11-06', '12:00', '13:00'),
+    (5, 'pablo.ruiz',          '2026-11-04', '08:30', '10:30');

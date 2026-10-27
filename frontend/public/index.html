@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartCampus</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">SC</span>
+      <div>
+        <h1>SmartCampus</h1>
+        <p>Gestión de aulas y reservas</p>
+      </div>
+    </div>
+    <div class="status">
+      <span class="badge" id="env-badge">entorno: …</span>
+      <span class="pill" id="backend-status"><span class="dot"></span><span class="label">Comprobando backend…</span></span>
+    </div>
+  </header>
+
+  <main>
+    <p id="message" class="message" role="status" hidden></p>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Aulas</h2>
+        <span class="count" id="rooms-count"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Nombre</th><th>Edificio</th><th class="num">Capacidad</th><th>Equipamiento</th><th></th></tr>
+          </thead>
+          <tbody id="rooms-body"></tbody>
+        </table>
+      </div>
+      <details>
+        <summary>Añadir aula</summary>
+        <form id="room-form" class="form">
+          <label>Nombre <input name="nombre" required maxlength="100"></label>
+          <label>Edificio <input name="edificio" required maxlength="100"></label>
+          <label>Capacidad <input name="capacidad" type="number" min="1" required></label>
+          <label class="wide">Equipamiento <input name="equipamiento" placeholder="proyector, pizarra, ordenadores"></label>
+          <button type="submit">Crear aula</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Reservas</h2>
+        <label class="filter">Aula
+          <select id="bookings-filter"><option value="">Todas</option></select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Aula</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th></th></tr>
+          </thead>
+          <tbody id="bookings-body"></tbody>
+        </table>
+      </div>
+      <details>
+        <summary>Nueva reserva</summary>
+        <form id="booking-form" class="form">
+          <label>Aula <select name="aula_id" id="booking-room" required></select></label>
+          <label>Usuario <input name="usuario" required maxlength="100"></label>
+          <label>Fecha <input name="fecha" type="date" required></label>
+          <label>Hora inicio <input name="hora_inicio" type="time" required></label>
+          <label>Hora fin <input name="hora_fin" type="time" required></label>
+          <button type="submit">Reservar</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Réplicas del backend</h2>
+      </div>
+      <p class="hint">
+        Envía 20 peticiones a <code>/api/health</code> y cuenta qué contenedor o Pod
+        responde a cada una. Con varias réplicas en Kubernetes se ve cómo el Service
+        reparte las peticiones.
+      </p>
+      <button id="lb-test" type="button">Enviar 20 peticiones</button>
+      <ul id="lb-results" class="bars"></ul>
+    </section>
+  </main>
+
+  <footer>Frontend servido por nginx · backend en <code id="backend-url">…</code></footer>
+  <script src="app.js"></script>
+</body>
+</html>

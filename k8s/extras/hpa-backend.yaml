@@ -1,0 +1,27 @@
+# AMPLIACIÓN OPCIONAL: autoescalado del backend según el uso de CPU.
+# No se aplica con "kubectl apply -f ." (está en otra carpeta) porque si está
+# activo, el HPA deshace los cambios hechos a mano con "kubectl scale".
+#
+# Necesita metrics-server. En Minikube:  minikube addons enable metrics-server
+# Aplicar:                               kubectl apply -f extras/hpa-backend.yaml
+# Ver cómo decide:                       kubectl get hpa -n smartcampus -w
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend
+  namespace: smartcampus
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # 50 % de lo pedido en requests.cpu (100m), es decir, 50m por Pod
+          averageUtilization: 50

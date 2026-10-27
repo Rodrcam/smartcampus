@@ -1,0 +1,17 @@
+# Configuración NO sensible, separada del código y de las imágenes.
+# Los Pods la reciben como variables de entorno al arrancar: si se cambia un
+# valor, los Pods que ya están en marcha siguen con el antiguo hasta que se
+# reinician (kubectl rollout restart deployment/<nombre>).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smartcampus-config
+  namespace: smartcampus
+data:
+  APP_ENV: "kubernetes"
+  # Nombre DNS completo del Service del backend:
+  # <service>.<namespace>.svc.cluster.local
+  BACKEND_URL: "http://backend-service.smartcampus.svc.cluster.local:8000"
+  DB_HOST: "database-service"
+  DB_PORT: "5432"
+  DB_NAME: "smartcampus"

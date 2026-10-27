@@ -1,0 +1,7 @@
+# Espacio de nombres propio para agrupar todos los recursos de la aplicación.
+# Los ficheros llevan un número delante porque "kubectl apply -f ." los aplica
+# en orden alfabético y el namespace tiene que existir antes que el resto.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smartcampus

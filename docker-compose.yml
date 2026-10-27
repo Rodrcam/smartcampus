@@ -1,0 +1,81 @@
+# SmartCampus con Docker Compose.
+#
+#   docker compose up -d --build      levanta los tres servicios
+#   docker compose ps                 estado de los contenedores
+#   docker compose down               los para (los datos siguen en el volumen)
+#   docker compose down -v            los para y BORRA el volumen de la base de datos
+#
+# Las credenciales tienen valores por defecto para que funcione sin más con
+# "docker compose up". Para cambiarlas, copia .env.example a .env y edítalo:
+# Compose lee el fichero .env automáticamente.
+
+name: smartcampus
+
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-smartcampus}
+      POSTGRES_USER: ${DB_USER:-smartcampus}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-smartcampus_dev}
+    volumes:
+      # Volumen con nombre: los datos sobreviven a "docker compose down"
+      - db-data:/var/lib/postgresql/data
+      # Script que crea las tablas y los datos de ejemplo la primera vez
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    image: smartcampus-backend:1.0
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DB_HOST: database        # nombre del servicio: lo resuelve el DNS interno de Docker
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-smartcampus}
+      DB_USER: ${DB_USER:-smartcampus}
+      DB_PASSWORD: ${DB_PASSWORD:-smartcampus_dev}
+    ports:
+      - "8000:8000"            # solo para probar la API directamente (/health, /docs)
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      database:
+        condition: service_healthy   # espera a que PostgreSQL acepte conexiones
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: smartcampus-frontend:1.0
+    environment:
+      BACKEND_URL: http://backend:8000
+      APP_ENV: ${APP_ENV:-development}
+    ports:
+      - "8080:80"              # http://localhost:8080
+    networks:
+      - frontend-net           # no está en backend-net: no puede llegar a la base de datos
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  frontend-net:
+  backend-net:
+
+volumes:
+  db-data:

@@ -1,0 +1,32 @@
+# Service que usa el backend para conectarse a PostgreSQL. Tiene una IP virtual
+# estable y un nombre DNS (database-service) aunque el Pod cambie de IP.
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+  namespace: smartcampus
+spec:
+  type: ClusterIP
+  selector:
+    app: database
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+# Service "headless" (sin IP virtual) que pide el StatefulSet en serviceName.
+# Da a cada Pod un nombre DNS propio y estable, por ejemplo:
+#   database-0.database-headless.smartcampus.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-headless
+  namespace: smartcampus
+spec:
+  clusterIP: None
+  selector:
+    app: database
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
