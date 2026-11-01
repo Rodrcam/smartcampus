@@ -331,3 +331,6 @@ que hay que hacer, está en [docs/GUIA-PRUEBAS.md](docs/GUIA-PRUEBAS.md).
 | `port is already allocated` | El puerto 8080 u 8000 ya está en uso | Cerrar lo que lo use o cambiar el puerto de la izquierda en `ports:` |
 | La web muestra "Backend no disponible" | El backend está parado o no está listo | `docker compose ps` / `kubectl get pods` y revisar `docker compose logs backend` / `kubectl logs deploy/backend` |
 | El PVC se queda en `Pending` | El clúster no tiene StorageClass por defecto | En Minikube: `minikube addons enable default-storageclass storage-provisioner` |
+
+
+
